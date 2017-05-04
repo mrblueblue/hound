@@ -95,10 +95,16 @@ defmodule Hound.SessionServer do
     {:noreply, state}
   end
 
-  defp create_session(driver_info, opts) do
+  defp create_session(driver_info, opts, retries \\ 2) do
     case Hound.Session.create_session(driver_info[:browser], opts) do
       {:ok, session_id} -> session_id
-      {:error, reason} -> raise "could not create a new session: #{reason}, check webdriver is running"
+      {:error, reason} ->
+        if retries > 0 do
+          :timer.sleep(7500)
+          create_session(driver_info, opts, retries - 1)
+        else
+          raise "could not create a new session: #{reason}, check webdriver is running"
+        end
     end
   end
 
